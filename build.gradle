@@ -1,0 +1,87 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url = "https://jcenter.bintray.com/"
+        }
+        maven {
+            name = "forge"
+            url = "https://maven.minecraftforge.net/"
+        }
+        maven {
+            name = "sonatype"
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+    }
+    dependencies {
+        classpath ('com.anatawa12.forge:ForgeGradle:1.2-1.1.+') {
+            changing = true
+        }
+    }
+}
+
+apply plugin: 'forge'
+
+sourceCompatibility = targetCompatibility = "1.8"
+
+version = project.version
+group= project.group
+archivesBaseName = project.name
+
+tasks.withType(Jar) {
+    compileJava.options.encoding = 'UTF-8'
+    compileJava.options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+allprojects {
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
+}
+
+configurations {
+    includeCompile
+    compile.extendsFrom includeCompile
+}
+
+jar {
+    from {
+        configurations.includeCompile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+minecraft {
+    version = "1.7.10-10.13.4.1614-1.7.10"
+    runDir = "eclipse"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "amarok"
+        url = "http://maven.snowlyicewolf.club/"
+    }
+}
+
+dependencies {
+    includeCompile "org.python:jython:${project.jython_version}"
+    includeCompile "org.python:jython-standalone:${project.jython_version}"
+
+    implementation "club.someoneice.pineapplepsychic:pineapple-psychic:1.4"
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "mcversion", project.minecraft.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version':project.version, 'mcversion':project.minecraft.version
+    }
+    
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
